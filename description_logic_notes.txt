@@ -1,0 +1,39 @@
+Generic Frame - Like classes
+Individual Frame - Instance of Class
+Slots - Part of an individual frame, a list of buckets. Like class attributes.
+Slot filler - The actual instanece attribute
+
+Special slot INSTANCE-OF - Contains a generic frame, the Class it is instantiated from.
+Special slot IS-A - another generic frame, like Class Inheritance
+
+1. Object declared
+2. Init ran: Slot fillers are inherited if possible - like initization using a parent class 
+3. Slots calculated using procedures
+
+-----
+
+Description Logic
+=================
+
+- defines concepts and relations
+- states constraints
+- infer consequences
+
+TBox: Defines terminology
+ABox: States facts about the world
+Reasoning: Derive knowledge
+
+
+TBox: 
+ - Mother = Person & Female
+
+ABox:
+ - Female & Person(Anna)   Concept
+ - hasChild(Anna, Jacob)   Role
+
+
+Expansion for Deduction:
+
+   2.13 Reduction to unsatisfiability 
+   2.14 Reducing unsatisfiability
+
