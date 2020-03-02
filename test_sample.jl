@@ -43,17 +43,29 @@ premise = change_premise(premise)
 
 abox = Set([premise])
 abox = nnf_abox(abox)
+@test  [[:and, [:and, [:all, [:rule, r, [:all, [:rule, s, A]]]],
+                               [:exists, [:rule, r, [:all, [:rule, s, B]]]]],
+                      [:all, [:rule, r, [:all, [:rule, s, [:or, [:not, A], [:not, B]]]]]]],  Object("_5")] in abox
 
 tableau_and(abox)
 
 e = [[:all, [:rule, r, [:all, [:rule, s, [:or,  [:not, A], [:not, B]]]]]],  Object("_5")]
+e2 = [[:exists, [:rule, r, [:all, [:rule, s, B]]]], Object("_5")]
+e3 = [[:all, [:rule, r, [:all, [:rule, s, [:or, [:not, A], [:not, B]]]]]], Object("_5")]
 @test e in abox
+@test e2 in abox
+@test e3 in abox
+
+tableau_rule(abox)
 printbox(abox)
 
-# statement = [:subsumes, [:and, [:all, [:rule, r, A]],
-#                                [:exists, [:rule, r, B]]],
-#                     [:exists, [:rule, r, [:and, A, B]]]]
-#
+
+
+statement = [:subsumes, [:and, [:all, [:rule, r, A]],
+                               [:exists, [:rule, r, B]]],
+                    [:exists, [:rule, r, [:and, A, B]]]]
+
 
 aboxes, answer = premise_subsumes(Set(), Dict(), statement)
+@test answer == true
 print()

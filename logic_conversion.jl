@@ -204,13 +204,17 @@ function printbox(abox)
 end
 
 
+function tableau_rule(abox)
+    tableau_and(abox)
+    tableau_or(abox, aboxes)
+    tableau_existential(abox)
+    tableau_universal(abox)
+    tableau_split_and(abox)
+end
+
 function tableau_rules(aboxes)
     for abox in aboxes
-        tableau_and(abox)
-        tableau_or(abox, aboxes)
-        tableau_existential(abox)
-        tableau_universal(abox)
-        tableau_split_and(abox)
+        tableau_rule(abox)
     end
 end
 
