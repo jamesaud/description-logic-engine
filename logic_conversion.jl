@@ -108,7 +108,9 @@ function tableau_or(abox, aboxes)
     match_or = function(exp) @match exp begin
         [[:or, C, D], a::Object] =>  begin
                                         if !(C in abox) && !(D in abox)
-                                          push!(aboxes, Set([collect(abox); [[D, a]]]))
+                                          newbox = copy(abox)
+                                          push!(newbox, [D, a])
+                                          push!(aboxes, newbox)
                                           push!(abox, [C, a])
                                         end
                                       end
@@ -203,19 +205,115 @@ function printbox(abox)
     end
 end
 
+struct InvalidFormula <: Exception
+    formula
+end
 
-function tableau_rule(abox)
-    tableau_and(abox)
-    tableau_or(abox, aboxes)
-    tableau_existential(abox)
-    tableau_universal(abox)
-    tableau_split_and(abox)
+function number_rule_nnf(exp)
+    recur(expr) = @match expr begin
+            [:not, [:>=, 0, [:rule, r, C]]] => throw(InvalidFormula(expr))
+            [:not, [:>=, n, [:rule, r, C]]] => [:<=, n - 1, recur([:rule, r, C])]
+            [:not, [:<=, n, [:rule, r, C]]] => [:>=, n + 1, recur([:rule, r, C])]
+            e::Array => map(recur, e)
+            e        => e
+        end
+    return recur(exp)
+end
+
+function number_rules_nnf(abox)
+    abox = map(number_rule_nnf, collect(abox))
+    return Set(abox)
+end
+
+
+function count_occurences_gt_rule(rule, object, Concept, abox)
+    count = 0
+
+    # Get all occurences of objects and return them
+    objects = []
+    for exp in abox
+        @match exp begin
+            [r, a, c] => if r == rule && a == object  && [Concept, c] in abox
+                            count += 1
+                            push!(objects, c)
+                         end
+        end
+    end
+    return count, objects
+end
+
+function tableau_gt(abox)
+    for exp in abox
+        @match exp begin
+            [[:>=, n, [:rule, r, C]], a] => begin
+                                                occurences, objects = count_occurences_gt_rule(r, a, C, abox)
+                                                for i = occurences:n-1
+                                                    b = Object(string("o", next_var()))
+                                                    push!(objects, b)
+                                                    push!(abox, [r, a, b])
+                                                    push!(abox, [C, b])
+                                                end
+                                                for ob1 in objects
+                                                    for ob2 in objects
+                                                        if ob1 != ob2
+                                                            push!(abox, [:!=, ob1, ob2])
+                                                        end
+                                                    end
+                                                end
+                                            end
+        end
+    end
+    return abox
+end
+
+
+function tableau_lt(abox)
+
+end
+
+function tableau_choose_rule(abox, aboxes)
+    apply_rule(r, a, C) = @match exp begin
+        [:rule, r_, a_, b_] => if r_ == r && a_ == a
+                                if !([C, b] in abox) && !(nnf([:not, [C, b]]) in abox)
+                                    newbox = copy(abox)
+                                    push!(abox, [C, b])
+                                    push!(newbox, nnf([:not, [C, b]]))
+                                    push!(aboxes, newbox)
+                                end
+                            end
+         e => e
+    end
+
+
+    for exp in abox
+        @match exp begin
+            [[:<=, n, [:rule, r, C]], a] => begin
+                                                apply_rule(r, a, C)
+                                            end
+        end
+    end
+    return abox
+end
+
+function tableau_number_rules(aboxes)
+    for abox in aboxes
+        tableau_choose_rule(abox, aboxes)
+        tableau_gt(abox)
+        tableau_lt(abox)
+    end
 end
 
 function tableau_rules(aboxes)
+    tableau_number_rules(aboxes)
+
     for abox in aboxes
-        tableau_rule(abox)
+        tableau_and(abox)
+        tableau_or(abox, aboxes)
+        tableau_existential(abox)
+        tableau_universal(abox)
+        tableau_split_and(abox)
     end
+    return aboxes
 end
 
 
@@ -260,9 +358,10 @@ function tableau(abox, tbox)
 
     list_prev, list_curr = Set(), Set([nothing])
     unique = (boxes) -> Set(map(collect, collect(copy(boxes))))
-    lengths = (boxes) -> Set([length(box) for box in boxes])
+    lengths = (boxes) -> Set([length(box) for box in copy(boxes)])
     count = 0
-    while !isempty(setdiff(list_curr, list_prev)) && count < 20
+
+    while !isempty(setdiff(list_curr, list_prev)) && count < 40
         list_prev = unique(aboxes)
         tableau_rules(aboxes)
         list_curr =  unique(aboxes)
@@ -275,7 +374,16 @@ function tableau(abox, tbox)
         end
 
     end
-    return aboxes
+    ab = Set()
+    # Fix a bug where bad box keeps getting generated
+    for abox in aboxes
+        if is_consistent(abox)
+            tableau_or(abox, aboxes)
+        end
+        push!(ab, abox)
+    end
+
+    return ab
 end
 
 function is_consistent(abox)
