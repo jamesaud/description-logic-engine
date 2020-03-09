@@ -26,11 +26,14 @@ struct Object
     name::String    # Mary
 end
 
-Atomic = Union{Relation, Concept, Object, Symbol}
+Atomic = Union{Relation, Concept, Object, Symbol, Integer}
 Expression = Union{Array{Atomic}, Atomic}
 Tbox = Dict{Concept, Atomic}
 Abox = Array{Expression}
 
+# Tautology concept
+T = Concept("T")
+Tautology = [:or, T, [:not, T]]
 __nextVar = 0
 
 function next_var()
@@ -90,9 +93,13 @@ function expand_concept(expression, t_box::Dict)
         expression = get(t_box, expression, expression)
     end
 
+    if expression == :T
+        expression = Tautology
+    end
+
     return @match expression begin
-        s::Atomic => s
         e::Array => map(recursive_expand_concept, e)
+        s => s
     end
 end
 
@@ -267,8 +274,91 @@ function tableau_gt(abox)
 end
 
 
-function tableau_lt(abox)
+function add_object_inequality(abox)
+    objects = Set()
+    recur(expr) = @match expr begin
+        e::Object => push!(objects, e)
+        e::Array => map(recur, expr)
+        e => e
+    end
+    for e in abox
+        recur(e)
+    end
 
+    for o1 in objects
+        for o2 in objects
+            if o1 != o2
+                push!(abox, [:!=, o1, o2])
+            end
+        end
+    end
+end
+
+
+function lt_replace_object_in_abox(o1, o2, abox)
+    # replace o1 with o2
+    recur(expr) = @match expr begin
+         e::Object  =>  e == o1 ? o2 : e
+         e::Array   =>  map(recur, e)
+         e          =>  e
+    end
+
+    for exp in abox
+        e = recur(exp)
+        delete!(abox, exp)
+        push!(abox, e)
+    end
+end
+
+function lt_rule(n, r, C, a, abox)
+    objects = Set()
+    for exp in abox
+        @match exp begin
+            [r_, a_, b] => if r == r_ && a_ == a
+                            if [C, b] in abox
+                                push!(objects, b)
+                            end
+                           end
+        end
+    end
+
+    if length(objects) <= n
+        return
+    end
+
+    replacements = Dict()
+    for o1 in objects
+        inequality_missing = [o2 for o2 in objects if !([:!=, o1, o2] in abox) && o1 != o2]
+        replacements[o1] = Set(inequality_missing)
+    end
+
+    replaced = Dict()
+    for (o1, objects) in replacements
+        valid_obs = objects
+        println(o1)
+        println(valid_obs)
+        for ob in objects
+            s = copy(replacements[ob])
+            push!(s, ob)
+            intersect!(valid_obs, s)
+        end
+        println(valid_obs)
+        println()
+
+        for o2 in valid_obs
+            lt_replace_object_in_abox(o1, o2, abox)         # replace o2 with o1
+            replaced[o2] = o1
+        end
+    end
+    printbox(abox)
+end
+
+function tableau_lt(abox)
+    for exp in abox
+        @match exp begin
+            [[:<=, n, [:rule, r, C]], a] => lt_rule(n, r, C, a, abox)
+        end
+    end
 end
 
 function tableau_choose_rule(abox, aboxes)
@@ -295,6 +385,7 @@ function tableau_choose_rule(abox, aboxes)
     return abox
 end
 
+
 function tableau_number_rules(aboxes)
     for abox in aboxes
         tableau_choose_rule(abox, aboxes)
@@ -305,7 +396,6 @@ end
 
 function tableau_rules(aboxes)
     tableau_number_rules(aboxes)
-
     for abox in aboxes
         tableau_and(abox)
         tableau_or(abox, aboxes)

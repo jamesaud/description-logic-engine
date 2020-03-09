@@ -82,6 +82,13 @@ answer = [[[:and,  [:and,  Person, Female],
 
 @test expansion == answer
 
+abox = [
+    [[:<=, 3, hasChild, :T], mary]
+]
+
+
+expansion = expand_concepts(abox, Dict())
+@test expansion == [[[:<=, 3, hasChild, [:or, T, [:not, T]]], mary]]
 
 premise = [:subsumes, Mother, Woman]
 @test change_premise(premise) ==  [[:and, Mother, [:not, Woman]], Object("_1")]
