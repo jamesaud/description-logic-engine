@@ -491,16 +491,16 @@ function tableau(abox, tbox)
         end
 
     end
-    ab = Set()
-    # Fix a bug where bad box keeps getting generated
-    for abox in aboxes
-        if is_consistent(abox)
-            tableau_or(abox, aboxes)
-        end
-        push!(ab, abox)
-    end
-
-    return ab
+    # ab = Set()
+    # # Fix a bug with the the tableau_or and the original abox. 
+    # This is a problem because I am using a Set of Sets, but the Sets are mutatable so weird things happen.
+    # for abox in aboxes
+    #     if is_consistent(abox)
+    #         tableau_or(abox, aboxes)
+    #     end
+    #     push!(ab, abox)
+    # end
+    return aboxes
 end
 
 function is_consistent(abox)
@@ -586,6 +586,12 @@ end
 function premise_subsumes(abox, tbox, premise)
     aboxes = tableau(abox, tbox, premise)
     box_open = any(map(is_consistent, collect(aboxes)))
-    # boxes = [box for box in aboxes if is_consistent(box)]
+    open_boxes = [box for box in aboxes if is_consistent(box)]
+    # Fix bug with the last abox (occurs because I'm using a set of sets, but the sets are mutable so weird stuff happens...) 
+    if length(open_boxes) == 1
+        box = open_boxes[1]
+        tableau_rules(Set([box]))
+        box_open = is_consistent(box)
+    end
     return aboxes, !box_open    # Unsatisfiable
 end

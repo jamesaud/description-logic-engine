@@ -31,13 +31,13 @@ abox = [
 ]
 
 result =  Set([
-    Any[Concept("Female"), Object("mary")],
-    Any[Any[:and, Any[:and, Concept("Person"), Concept("Female")], Any[:exists, Any[:rule, Relation("has child"), Concept("Person")]]], Object("mary")],
-    Any[Any[:exists, Any[:rule, Relation("has child"), Concept("Person")]], Object("mary")],
-    Any[Relation("has child"), Object("mary"), Object("tom")],
-    Any[Concept("Person"), Object("tom")],
-    Any[Concept("Person"), Object("mary")],
-    Any[Any[:and, Concept("Person"), Concept("Female")], Object("mary")]
+    [Concept("Female"), Object("mary")],
+    [[:and, [:and, Concept("Person"), Concept("Female")], [:exists, [:rule, Relation("has child"), Concept("Person")]]], Object("mary")],
+    [[:exists, [:rule, Relation("has child"), Concept("Person")]], Object("mary")],
+    [Relation("has child"), Object("mary"), Object("tom")],
+    [Concept("Person"), Object("tom")],
+    [Concept("Person"), Object("mary")],
+    [[:and, Concept("Person"), Concept("Female")], Object("mary")]
     ])
 
 consistent, model = abox_consistent(abox, tbox)
@@ -67,7 +67,7 @@ premise = [:subsumes, [:exists, [:rule, attendedBy, [:and, Smart, Studious]]],
                       [:exists, [:rule, attendedBy, GoodStudent]]]
 
 
-# Is person a subset of woman
+# # Is person a subset of woman
 aboxes, answer = premise_subsumes(Set(), tbox, premise)
 @test answer == true
 
@@ -108,10 +108,10 @@ premise = [:subsumes, [:and, one, [:or, two, three]], [:or, four, five]]
 
 aboxes, answer = premise_subsumes(Set(), Dict(), premise)
 
-@test answer == false
+@test answer == true
 
 
-# 4. Numbers
+# # 4. Numbers
 joe = Object("joe")
 ann = Object("ann")
 eva = Object("eva")
@@ -141,7 +141,7 @@ consistent, boxes = abox_consistent_with_t(abox)
 result = Set([
     [Relation("has child"), Object("mary"), Object("joe")],
     [[:or, Concept("T"), [:not, Concept("T")]], Object("ann")],
-    [Concept("T"), Object("mary")],
+    [[:not, Concept("T")], Object("mary")],
     [[:or, Concept("T"), [:not, Concept("T")]], Object("joe")],
     [Concept("T"), Object("joe")],
     [[:<=, 2, [:rule, Relation("has child"), [:or, Concept("T"), [:not, Concept("T")]]]], Object("mary")],
