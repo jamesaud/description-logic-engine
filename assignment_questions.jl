@@ -112,7 +112,6 @@ aboxes, answer = premise_subsumes(Set(), Dict(), premise)
 
 
 # 4. Numbers
-
 joe = Object("joe")
 ann = Object("ann")
 eva = Object("eva")
@@ -130,7 +129,7 @@ consistent, box = abox_consistent_with_obj_and_t(abox)
 @test consistent == false
 
 
-# Assuming thhat the names are not unique objects
+# Assuming that the names are not unique objects
 abox = Set([
     [hasChild, mary, ann],
     [hasChild, mary, eva],
