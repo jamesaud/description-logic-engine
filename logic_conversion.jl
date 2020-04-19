@@ -294,6 +294,22 @@ function add_object_inequality(abox)
     end
 end
 
+function add_T(abox)
+    objects = Set()
+    recur(expr) = @match expr begin
+        e::Object => push!(objects, e)
+        e::Array => map(recur, expr)
+        e => e
+    end
+    for e in abox
+        recur(e)
+    end
+
+    for o1 in objects
+        push!(abox, [[:or, T, [:not, T]], o1])
+    end
+end
+
 
 function lt_replace_object_in_abox(o1, o2, abox)
     # replace o1 with o2
@@ -310,7 +326,10 @@ function lt_replace_object_in_abox(o1, o2, abox)
     end
 end
 
+
 function lt_rule(n, r, C, a, abox)
+    recur = a_box -> lt_rule(n, r, C, a, a_box)
+
     objects = Set()
     for exp in abox
         @match exp begin
@@ -326,31 +345,15 @@ function lt_rule(n, r, C, a, abox)
         return
     end
 
-    replacements = Dict()
+    
     for o1 in objects
-        inequality_missing = [o2 for o2 in objects if !([:!=, o1, o2] in abox) && o1 != o2]
-        replacements[o1] = Set(inequality_missing)
-    end
-
-    replaced = Dict()
-    for (o1, objects) in replacements
-        valid_obs = objects
-        println(o1)
-        println(valid_obs)
-        for ob in objects
-            s = copy(replacements[ob])
-            push!(s, ob)
-            intersect!(valid_obs, s)
-        end
-        println(valid_obs)
-        println()
-
-        for o2 in valid_obs
-            lt_replace_object_in_abox(o1, o2, abox)         # replace o2 with o1
-            replaced[o2] = o1
+        for o2 in objects
+            if !([:!=, o1, o2] in abox) && !([:!=, o2, o1] in abox) && o1 != o2
+                lt_replace_object_in_abox(o1, o2, abox)
+                return recur(abox)
+            end
         end
     end
-    printbox(abox)
 end
 
 function tableau_lt(abox)
@@ -385,6 +388,30 @@ function tableau_choose_rule(abox, aboxes)
     return abox
 end
 
+function count_occurences_lt_contraction(abox, r, C, a)
+    count, objects = count_occurences_gt_rule(r, a, C, abox)
+    in_objects = Set()
+    for o1 in objects
+        if all([o1 != o2 for o2 in objects if o1 != o2])
+            push!(in_objects, o1)
+        end
+    end
+    return length(in_objects)
+end
+
+function check_number_contradictions(abox)
+    for exp in abox
+        @match exp begin
+            [:!=, a, b] => if a == b
+                                return true
+                           end
+            [[:<=, n, [:rule, r, C]], a] => if count_occurences_lt_contraction(abox, r, C, a) > n
+                                                return true
+                                            end
+        end
+    end
+    return false
+end
 
 function tableau_number_rules(aboxes)
     for abox in aboxes
@@ -478,6 +505,11 @@ end
 
 function is_consistent(abox)
     expression_set = copy(abox)
+
+    if check_number_contradictions(abox)
+        return false
+    end
+    
     for exp in abox
         union!(expression_set, split_and(exp))
     end
@@ -493,11 +525,52 @@ function is_consistent(abox)
             e         => nnf([:not, e]) in expression_set
         end
 
-        if contradiction return false end
+        if contradiction 
+            return false 
+        end
     end
     return true
 end
 
+
+function tableau_with_obj_and_t(abox, tbox, premise)
+    # Premise: Subsumption Question
+    add_object_inequality(abox)
+    add_T(abox)
+    tableau(abox, tbox, premise)
+end
+
+function tableau_with_obj_and_t(abox, tbox)
+    # Premise: Subsumption Question
+    add_object_inequality(abox)
+    add_T(abox)
+    tableau(abox, tbox)
+end
+
+function tableau_with_t(abox, tbox)
+    add_T(abox)
+    tableau(abox, tbox)
+end
+
+function abox_consistent_with_t(abox)
+    aboxes = tableau_with_t(abox, Dict())
+    aboxes = collect(aboxes)
+    open_boxes = filter(is_consistent, aboxes)
+    if length(open_boxes) == 0
+        return false, nothing
+    end
+    return true, open_boxes
+end
+
+function abox_consistent_with_obj_and_t(abox)
+    aboxes = tableau_with_obj_and_t(abox, Dict())
+    aboxes = collect(aboxes)
+    open_boxes = filter(is_consistent, aboxes)
+    if length(open_boxes) == 0
+        return false, nothing
+    end
+    return true, open_boxes
+end
 
 function abox_consistent(abox, tbox)
     aboxes = tableau(abox, tbox)
@@ -513,5 +586,6 @@ end
 function premise_subsumes(abox, tbox, premise)
     aboxes = tableau(abox, tbox, premise)
     box_open = any(map(is_consistent, collect(aboxes)))
+    # boxes = [box for box in aboxes if is_consistent(box)]
     return aboxes, !box_open    # Unsatisfiable
 end

@@ -126,5 +126,82 @@ abox = Set([
     [:!=, o2, o1]
     ])
 
+res = Set([
+    [[:<=, 2, [:rule, hasChild, Male]], mary],
+    [hasChild, mary, o1],
+    [hasChild, mary, o3],
+    [Male, o1],
+    [Male, o3],
+    [:!=, o1, o3],
+    [:!=, o3, o1]
+    ])
+
 tableau_lt(abox)
-print()
+@test abox == res
+
+a = Object("a")
+b = Object("b")
+c = Object("c")
+d = Object("d")
+abox = Set([
+    [:!=, a, d],
+    [:!=, c, b],
+
+    [[:<=, 2, [:rule, hasChild, Male]], mary],
+
+    [Male, a],
+    [Male, b],
+    [Male, c],
+    [Male, d],
+
+    [hasChild, mary, a],
+    [hasChild, mary, b],
+    [hasChild, mary, c],
+    [hasChild, mary, d]
+])
+
+tableau_lt(abox)
+
+
+o1, o2, o3, o4 = Object("o1"), Object("o2"), Object("o3"), Object("o4")
+
+abox = Set([
+    [[:<=, 1, [:rule, hasChild, Male]], mary],
+    [hasChild, mary, o1],
+    [hasChild, mary, o2],
+    [hasChild, mary, o3],
+    [Male, o1],
+    [Male, o2],
+    [:!=, o1, o2],
+    [:!=, o2, o1]
+    
+    ])
+
+@test 2 == count_occurences_lt_contraction(abox, hasChild, Male, mary)
+
+abox = Set([
+    [hasChild, mary, o1],
+    [hasChild, mary, o2],
+    [hasChild, mary, o3],
+    [[:<=, 3, [:rule, hasChild, :T]], mary],
+])
+
+
+consistent, box = abox_consistent_with_obj_and_t(abox)
+@test consistent
+
+joe = Object("joe")
+ann = Object("ann")
+eva = Object("eva")
+mary = Object("mary")
+
+abox = Set([
+    [hasChild, mary, ann],
+    [hasChild, mary, eva],
+    [hasChild, mary, joe],
+    [[:<=, 2, [:rule, hasChild, :T]], mary],
+])
+
+
+consistent, box = abox_consistent_with_obj_and_t(abox)
+@test !consistent
