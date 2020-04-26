@@ -222,3 +222,24 @@ consistent, model = abox_consistent(abox, tbox)
 ```
 
 The variable `result` contains the model given by the algorithm, and the variable `consistent` shows that the abox is consistent. Look through the rest of the test cases to see the rest of the answers.
+
+## Julia Version & Installation 
+
+#### Julia Version
+`
+Julia Version 1.3.1
+Commit 2d5741174c (2019-12-30 21:36 UTC)
+Platform Info:
+  OS: Windows (x86_64-w64-mingw32)
+  CPU: Intel(R) Core(TM) i5-8250U CPU @ 1.60GHz
+  WORD_SIZE: 64
+  LIBM: libopenlibm
+  LLVM: libLLVM-6.0.1 (ORCJIT, skylake)
+Environment:
+  JULIA_EDITOR = "C:\Users\James\AppData\Local\Programs\Microsoft VS Code\Code.exe"
+  JULIA_NUM_THREADS = 1
+`
+
+#### Installation
+Run `git clone https://github.com/jamesaud/logic_engine_2`
+
