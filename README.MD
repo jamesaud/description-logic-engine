@@ -43,8 +43,10 @@ This is written in Julia. Prefix syntax is used in the parsing, and Julia code i
 - TBOX: is a dicionary Dict mapping *Concepts => Expressions* 
 - PREMISE: is an expression
 
-### Example
+### Examples
 
+
+#### Abox and Tbox
 ```
 include("logic_conversion.jl")
 
@@ -78,4 +80,66 @@ abox = [
 ]
 ```
 
+to check consistency:
+
+```
+...
+consistent, model = abox_consistent(abox, tbox)
+```
+
+#### Subsumption
+```
+
+GoodStudent = Concept("Good Student")
+Smart = Concept("Smart")
+Studious = Concept("Studious")
+attendedBy = Relation("Attended by")
+SmartPerson = Concept("Smart Person")
+
+tbox = Dict(
+    GoodStudent => [:or,  Smart, Studious],
+    SmartPerson => Smart
+)
+
+premise = [:subsumes, [:exists, [:rule, attendedBy, [:and, Smart, Studious]]],
+                      [:exists, [:rule, attendedBy, GoodStudent]]]
+
+
+aboxes, answer = premise_subsumes(Set(), tbox, premise)
+@test answer == true
+```
+
+
+#### Numbers Restrictions
+
+```
+joe = Object("joe")
+ann = Object("ann")
+eva = Object("eva")
+mary = Object("mary")
+
+# Assuming that the names are unique objects
+abox = Set([
+    [hasChild, mary, ann],
+    [hasChild, mary, eva],
+    [hasChild, mary, joe],
+    [[:<=, 2, [:rule, hasChild, :T]], mary],
+])
+
+consistent, box = abox_consistent_with_obj_and_t(abox)
+@test consistent == false
+
+
+# Assuming that the names are not unique objects
+abox = Set([
+    [hasChild, mary, ann],
+    [hasChild, mary, eva],
+    [hasChild, mary, joe],
+    [[:<=, 2, [:rule, hasChild, :T]], mary],
+])
+
+consistent, boxes = abox_consistent_with_t(abox)
+```
+
+The function `abox_consistent_with_t` adds allows the use of `:T` (my implementation adds the *T or not T* description to all objects). The function `abox_consistent_with_obj_and_t` additionally adds inequality to all objects to make them all unique.
 
