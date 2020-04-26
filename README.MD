@@ -83,13 +83,11 @@ abox = [
 to check consistency:
 
 ```
-...
 consistent, model = abox_consistent(abox, tbox)
 ```
 
 #### Subsumption
 ```
-
 GoodStudent = Concept("Good Student")
 Smart = Concept("Smart")
 Studious = Concept("Studious")
