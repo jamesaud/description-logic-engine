@@ -241,5 +241,8 @@ Environment:
 `
 
 #### Installation
-Run `git clone https://github.com/jamesaud/logic_engine_2`
+1. Run `git clone https://github.com/jamesaud/logic_engine_2`
 
+2. `cd logic_engine_2`
+
+3. Run julia, and then you can run the `include` statements. 
