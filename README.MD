@@ -145,7 +145,6 @@ The function `abox_consistent_with_t` adds allows the use of `:T` (my implementa
 #### More complicated example
 
 ```
-
 r = Relation("r")
 s = Relation("s")
 A = Concept("A")
@@ -179,3 +178,47 @@ aboxes, answer = premise_subsumes(Set(), Dict(), premise)
 
 @test answer == true
 ```
+
+
+## Tests
+Run the following tests:
+
+```
+include("test_number.jl")
+include("test_logic_conversion.jl")
+```
+
+## Assignment
+The asignment questions are in `assignment_questions.jl`. They are framed as Julia tests, so you can run them with:
+
+```
+include("assignment_questions.jl"
+```
+
+All the tests will pass. You can see what the output of each problem in the file. For example:
+
+```
+abox = [
+    [hasChild, mary, tom],
+    [Woman, mary],
+    [Person, tom],
+    [Mother, mary]
+]
+
+result =  Set([
+    [Concept("Female"), Object("mary")],
+    [[:and, [:and, Concept("Person"), Concept("Female")], [:exists, [:rule, Relation("has child"), Concept("Person")]]], Object("mary")],
+    [[:exists, [:rule, Relation("has child"), Concept("Person")]], Object("mary")],
+    [Relation("has child"), Object("mary"), Object("tom")],
+    [Concept("Person"), Object("tom")],
+    [Concept("Person"), Object("mary")],
+    [[:and, Concept("Person"), Concept("Female")], Object("mary")]
+    ])
+
+consistent, model = abox_consistent(abox, tbox)
+
+@test consistent == true
+@test model == result
+```
+
+The variable `result` contains the model given by the algorithm, and the variable `consistent` shows that the abox is consistent. Look through the rest of the test cases to see the rest of the answers.
