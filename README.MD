@@ -241,7 +241,7 @@ Environment:
 `
 
 #### Installation
-1. Run `git clone https://github.com/jamesaud/logic_engine_2`
+1. Run `git clone https://github.com/jamesaud/description-logic-engine`
 
 2. `cd logic_engine_2`
 
