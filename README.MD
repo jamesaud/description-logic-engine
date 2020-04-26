@@ -143,3 +143,41 @@ consistent, boxes = abox_consistent_with_t(abox)
 
 The function `abox_consistent_with_t` adds allows the use of `:T` (my implementation adds the *T or not T* description to all objects). The function `abox_consistent_with_obj_and_t` additionally adds inequality to all objects to make them all unique.
 
+
+#### More complicated example
+
+```
+
+r = Relation("r")
+s = Relation("s")
+A = Concept("A")
+B = Concept("B")
+C = Concept("C")
+
+#∀r.∀s.A ⊓ ∃r.∀s.B ⊓ ∀r.∃s.C ⊑ ∃r.∃s.(A⊓B⊓C)
+
+one = [:all, [:rule, r, [:all, [:rule, s, A]]]]
+two = [:exists, [:rule, r, [:all, [:rule, s, B]]]]
+three = [:all, [:rule, r, [:exists, [:rule, s, C]]]]
+four = [:exists, [:rule, r, [:exists, [:rule, s,  [:and, A, [:and, B, C]]]]]]
+
+premise = [:subsumes, [:and, [:and, one, two], three], four]
+
+aboxes, answer = premise_subsumes(Set(), Dict(), premise)
+
+@test answer == true
+
+
+# ∀r.∀s.A ⊓ (∃r.∀s.¬A ⊔ ∀r.∃s.B) ⊑ ∀r.∃s.(A ⊓ B) ⊔ ∃r.∀s.¬B
+one = [:all, [:rule, r, [:all, [:rule, s, A]]]]
+two = [:exists, [:rule, r, [:all, [:rule, s, [:not, A]]]]]
+three = [:all, [:rule, r, [:exists, [:rule, s, B]]]]
+four = [:all, [:rule, r, [:exists, [:rule, s, [:and, A, B]]]]]
+five = [:exists, [:rule, r, [:all, [:rule, s, [:not, B]]]]]
+
+premise = [:subsumes, [:and, one, [:or, two, three]], [:or, four, five]]
+
+aboxes, answer = premise_subsumes(Set(), Dict(), premise)
+
+@test answer == true
+```
